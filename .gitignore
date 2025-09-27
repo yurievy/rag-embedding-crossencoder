@@ -1,6 +1,10 @@
 # Embeddings / dataset
 intfloat-multilingual-e5-base.json
 
+# Flask / web
+static/
+templates/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
