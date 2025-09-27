@@ -2,21 +2,32 @@ from sentence_transformers import CrossEncoder
 import logging
 from typing import List, Dict, Any
 
-# Configure logger
-logger = logging.getLogger(__name__)
+# -------------------------------
+# Constants
+# -------------------------------
+CROSS_ENCODER_MODEL = "jinaai/jina-reranker-v2-base-multilingual"
+DEVICE = "cpu"
 
+# -------------------------------
+# Configure logger
+# -------------------------------
+logger = logging.getLogger(__name__)
 logger.info("Initializing Cross-Encoder reranker...")
 
-# Initialize the CrossEncoder model
+# -------------------------------
+# Initialize CrossEncoder model
+# -------------------------------
 reranker = CrossEncoder(
-    'jinaai/jina-reranker-v2-base-multilingual',
-    device='cpu',
+    CROSS_ENCODER_MODEL,
+    device=DEVICE,
     trust_remote_code=True
 )
+logger.info(f"Cross-Encoder reranker '{CROSS_ENCODER_MODEL}' successfully loaded.")
 
-logger.info("Cross-Encoder reranker successfully loaded.")
 
-
+# -------------------------------
+# Function to rerank candidate answers
+# -------------------------------
 def rerank_questions_cross_encoder(
     top_chunk_results: List[Dict[str, Any]],
     raw_data: Dict[str, Dict[str, str]],

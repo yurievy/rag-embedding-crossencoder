@@ -7,34 +7,38 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# -------------------------------
+# Configure logger
+# -------------------------------
 logger = logging.getLogger(__name__)
 
 # -------------------------------
-# Load model and dataset
+# Constants
 # -------------------------------
-model_name = "intfloat/multilingual-e5-base"
-raw_data_path = f"data/raw_{model_name.replace('/', '-')}.json"
-dataset_path = f"data/dataset_{model_name.replace('/', '-')}.json"
+MODEL_NAME = "intfloat/multilingual-e5-base"
+RAW_DATA_PATH = f"data/raw_{MODEL_NAME.replace('/', '-')}.json"
+DATASET_PATH = f"data/dataset_{MODEL_NAME.replace('/', '-')}.json"
 
+# -------------------------------
+# Load model and datasets
+# -------------------------------
 logger.info("Initializing embedding retriever...")
 
 # Load raw data
-with open(raw_data_path, "r", encoding="utf-8") as f:
+with open(RAW_DATA_PATH, "r", encoding="utf-8") as f:
     raw_data: Dict[str, Dict[str, Any]] = json.load(f)
 
 # Load SentenceTransformer model
-model = SentenceTransformer(model_name)
-
-logger.info("Embedding retriever successfully loaded.")
+model = SentenceTransformer(MODEL_NAME)
+logger.info(f"SentenceTransformer model '{MODEL_NAME}' successfully loaded.")
 
 # Load dataset with embeddings
 logger.info("Loading embeddings...")
-with open(dataset_path, "r", encoding="utf-8") as f:
+with open(DATASET_PATH, "r", encoding="utf-8") as f:
     dataset: List[Dict[str, Any]] = json.load(f)
 
 embeddings = np.array([item["embedding"] for item in dataset])
 logger.info("Embeddings are loaded.")
-
 
 # -------------------------------
 # Text preprocessing
@@ -45,8 +49,7 @@ def normalize_text(text: str) -> str:
     """
     text = text.lower()
     text = text.translate(str.maketrans("", "", string.punctuation))
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def encode_text(texts: List[str]) -> np.ndarray:
@@ -54,7 +57,6 @@ def encode_text(texts: List[str]) -> np.ndarray:
     Encode a list of texts using the sentence transformer model.
     """
     return model.encode(texts)
-
 
 # -------------------------------
 # Search top-k chunks with unique questions
@@ -72,11 +74,8 @@ def search_top_k(question_emb: np.ndarray, top_k: int = 5, chunk_top_k: int = 50
         List[Dict]: List of top questions with scores and top chunks.
     """
     similarities = cosine_similarity(question_emb, embeddings)[0]
-
-    # Get top chunk indices
     best_idxs = similarities.argsort()[::-1][:chunk_top_k]
 
-    # Aggregate scores and chunks by question
     scores_by_question: Dict[str, float] = {}
     chunks_by_question: Dict[str, List[tuple]] = {}
 
@@ -85,17 +84,15 @@ def search_top_k(question_emb: np.ndarray, top_k: int = 5, chunk_top_k: int = 50
         chunk_text = dataset[idx].get("chunk_text", "")
         score = similarities[idx]
 
-        # Keep the best score per question
+        # Keep best score per question
         scores_by_question[q_id] = max(score, scores_by_question.get(q_id, 0.0))
 
-        # Store top chunks per question (max 3)
+        # Store top chunks (max 3 per question)
         chunks_by_question.setdefault(q_id, []).append((score, chunk_text))
         chunks_by_question[q_id] = sorted(chunks_by_question[q_id], key=lambda x: x[0], reverse=True)[:3]
 
-    # Select top questions
     sorted_q_ids = sorted(scores_by_question.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
-    # Prepare results
     results: List[Dict[str, Any]] = []
     for q_id, score in sorted_q_ids:
         results.append({
@@ -105,7 +102,6 @@ def search_top_k(question_emb: np.ndarray, top_k: int = 5, chunk_top_k: int = 50
         })
 
     return results
-
 
 # -------------------------------
 # Rerank top chunks using question similarity
@@ -131,6 +127,5 @@ def rerank_questions(top_chunk_results: List[Dict[str, Any]], question_emb: np.n
         score = cosine_similarity(question_emb, chunk_emb)[0][0]
         scores.append({"id": chunk_id, "score": score})
 
-    # Sort by descending score and return top-k
     scores.sort(key=lambda x: x["score"], reverse=True)
     return scores[:top_k]
