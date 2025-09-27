@@ -12,7 +12,7 @@ This repository contains a **RAG (Retrieval-Augmented Generation) pipeline** wit
 1. Clone repository:
 
 ```bash
-git clone https://github.com/username/rag-embedding-crossencoder.git
+git clone https://github.com/yurievy/rag-embedding-crossencoder.git
 ```
 
 2. Navigate to the project folder:
