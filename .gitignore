@@ -1,7 +1,5 @@
-# Embeddings / dataset
-intfloat-multilingual-e5-base.json
-
 # Flask / web
+data/
 static/
 templates/
 
