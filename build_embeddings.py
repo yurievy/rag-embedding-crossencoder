@@ -19,7 +19,6 @@ AVAILABLE_MODELS = [
 SOURCE_FOLDER = "source"
 RAW_FILENAME_TEMPLATE = "data/raw_{model}.json"
 DATASET_FILENAME_TEMPLATE = "data/dataset_{model}.json"
-LOG_FILE = "log.txt"
 
 CHUNK_SIZE = 200
 CHUNK_OVERLAP = 50
